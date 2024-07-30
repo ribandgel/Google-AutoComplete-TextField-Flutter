@@ -1,14 +1,13 @@
 library google_places_flutter;
 
+import 'dart:developer';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_places_flutter/model/place_details.dart';
 import 'package:google_places_flutter/model/place_type.dart';
 import 'package:google_places_flutter/model/prediction.dart';
-
-import 'package:rxdart/subjects.dart';
-import 'package:dio/dio.dart';
 import 'package:rxdart/rxdart.dart';
 
 import 'DioErrorHandler.dart';
@@ -16,6 +15,7 @@ import 'DioErrorHandler.dart';
 class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   InputDecoration inputDecoration;
   ItemClick? itemClick;
+  Function? onClearData;
   GetPlaceDetailswWithLatLng? getPlaceDetailWithLatLng;
   bool isLatLngRequired = true;
 
@@ -36,25 +36,25 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   PlaceType? placeType;
   String? language;
 
-  GooglePlaceAutoCompleteTextField(
-      {required this.textEditingController,
-      required this.googleAPIKey,
-      this.debounceTime: 600,
-      this.inputDecoration: const InputDecoration(),
-      this.itemClick,
-      this.isLatLngRequired = true,
-      this.textStyle: const TextStyle(),
-      this.countries,
-      this.getPlaceDetailWithLatLng,
-      this.itemBuilder,
-      this.boxDecoration,
-      this.isCrossBtnShown = true,
-      this.seperatedBuilder,
-      this.showError = true,
-      this.containerHorizontalPadding,
-      this.containerVerticalPadding,
-      this.focusNode,
-      this.placeType,this.language='en'});
+  GooglePlaceAutoCompleteTextField({required this.textEditingController,
+    required this.googleAPIKey,
+    this.debounceTime: 600,
+    this.inputDecoration: const InputDecoration(),
+    this.itemClick,
+    this.onClearData,
+    this.isLatLngRequired = true,
+    this.textStyle: const TextStyle(),
+    this.countries,
+    this.getPlaceDetailWithLatLng,
+    this.itemBuilder,
+    this.boxDecoration,
+    this.isCrossBtnShown = true,
+    this.seperatedBuilder,
+    this.showError = true,
+    this.containerHorizontalPadding,
+    this.containerVerticalPadding,
+    this.focusNode,
+    this.placeType, this.language = 'en'});
 
   @override
   _GooglePlaceAutoCompleteTextFieldState createState() =>
@@ -112,8 +112,8 @@ class _GooglePlaceAutoCompleteTextFieldState
             (!widget.isCrossBtnShown)
                 ? SizedBox()
                 : isCrossBtn && _showCrossIconWidget()
-                    ? IconButton(onPressed: clearData, icon: Icon(Icons.close))
-                    : SizedBox()
+                ? IconButton(onPressed: clearData, icon: Icon(Icons.close))
+                : SizedBox()
           ],
         ),
       ),
@@ -122,7 +122,8 @@ class _GooglePlaceAutoCompleteTextFieldState
 
   getLocation(String text) async {
     String apiURL =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget.googleAPIKey}&language=${widget.language}";
+        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget
+        .googleAPIKey}&language=${widget.language}";
 
     if (widget.countries != null) {
       // in
@@ -146,15 +147,10 @@ class _GooglePlaceAutoCompleteTextFieldState
       _cancelToken = CancelToken();
     }
 
-    print("urlll $apiURL");
     try {
-      String proxyURL = "https://cors-anywhere.herokuapp.com/";
-      String url = kIsWeb ? proxyURL + apiURL : apiURL;
+      //String proxyURL = "https://cors-anywhere.herokuapp.com/";
+      String url = kIsWeb ? apiURL : apiURL;
 
-      /// Add the custom header to the options
-      final options = kIsWeb
-          ? Options(headers: {"x-requested-with": "XMLHttpRequest"})
-          : null;
       Response response = await _dio.get(url);
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
@@ -164,7 +160,7 @@ class _GooglePlaceAutoCompleteTextFieldState
       }
 
       PlacesAutocompleteResponse subscriptionResponse =
-          PlacesAutocompleteResponse.fromJson(response.data);
+      PlacesAutocompleteResponse.fromJson(response.data);
 
       if (text.length == 0) {
         alPredictions.clear();
@@ -208,7 +204,8 @@ class _GooglePlaceAutoCompleteTextFieldState
       var size = renderBox.size;
       var offset = renderBox.localToGlobal(Offset.zero);
       return OverlayEntry(
-          builder: (context) => Positioned(
+          builder: (context) =>
+              Positioned(
                 left: offset.dx,
                 top: size.height + offset.dy,
                 width: size.width,
@@ -218,33 +215,34 @@ class _GooglePlaceAutoCompleteTextFieldState
                   offset: Offset(0.0, size.height + 5.0),
                   child: Material(
                       child: ListView.separated(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    itemCount: alPredictions.length,
-                    separatorBuilder: (context, pos) =>
+                        padding: EdgeInsets.zero,
+                        shrinkWrap: true,
+                        itemCount: alPredictions.length,
+                        separatorBuilder: (context, pos) =>
                         widget.seperatedBuilder ?? SizedBox(),
-                    itemBuilder: (BuildContext context, int index) {
-                      return InkWell(
-                        onTap: () {
-                          var selectedData = alPredictions[index];
-                          if (index < alPredictions.length) {
-                            widget.itemClick!(selectedData);
+                        itemBuilder: (BuildContext context, int index) {
+                          return InkWell(
+                            onTap: () {
+                              var selectedData = alPredictions[index];
+                              inspect(selectedData);
+                              if (index < alPredictions.length) {
+                                widget.itemClick!(selectedData);
 
-                            if (widget.isLatLngRequired) {
-                              getPlaceDetailsFromPlaceId(selectedData);
-                            }
-                            removeOverlay();
-                          }
-                        },
-                        child: widget.itemBuilder != null
-                            ? widget.itemBuilder!(
+                                if (widget.isLatLngRequired) {
+                                  getPlaceDetailsFromPlaceId(selectedData);
+                                }
+                                removeOverlay();
+                              }
+                            },
+                            child: widget.itemBuilder != null
+                                ? widget.itemBuilder!(
                                 context, index, alPredictions[index])
-                            : Container(
+                                : Container(
                                 padding: EdgeInsets.all(10),
                                 child: Text(alPredictions[index].description!)),
-                      );
-                    },
-                  )),
+                          );
+                        },
+                      )),
                 ),
               ));
     }
@@ -261,16 +259,14 @@ class _GooglePlaceAutoCompleteTextFieldState
 
   Future<Response?> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     //String key = GlobalConfiguration().getString('google_maps_key');
-
     var url =
-        "https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction.placeId}&key=${widget.googleAPIKey}";
+        "https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction
+        .placeId}&key=${widget.googleAPIKey}";
     try {
       Response response = await _dio.get(
         url,
       );
-
       PlaceDetails placeDetails = PlaceDetails.fromJson(response.data);
-
       prediction.lat = placeDetails.result!.geometry!.location!.lat.toString();
       prediction.lng = placeDetails.result!.geometry!.location!.lng.toString();
 
@@ -296,6 +292,10 @@ class _GooglePlaceAutoCompleteTextFieldState
       try {
         this._overlayEntry?.remove();
       } catch (e) {}
+    }
+
+    if (widget.onClearData != null) {
+      widget.onClearData!();
     }
   }
 
