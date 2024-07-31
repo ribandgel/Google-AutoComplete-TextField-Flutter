@@ -57,8 +57,8 @@ class DioErrorHandler {
         errorResponse.message = "Send timeout in connection with API server";
         break;
       default:
-
-        errorResponse.message = "Something went wrong";
+        print("${dioError.message}");
+        errorResponse.message = "Something went wrong ${dioError.message}";
         break;
     }
     return errorResponse;
