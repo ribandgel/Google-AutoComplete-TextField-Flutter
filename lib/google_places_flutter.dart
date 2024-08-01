@@ -18,9 +18,8 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   Function? onClearData;
   GetPlaceDetailswWithLatLng? getPlaceDetailWithLatLng;
   bool isLatLngRequired = true;
-
+  String backendUrl;
   TextStyle textStyle;
-  String googleAPIKey;
   int debounceTime = 600;
   List<String>? countries = [];
   TextEditingController textEditingController = TextEditingController();
@@ -37,7 +36,7 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   String? language;
 
   GooglePlaceAutoCompleteTextField({required this.textEditingController,
-    required this.googleAPIKey,
+    required this.backendUrl,
     this.debounceTime: 600,
     this.inputDecoration: const InputDecoration(),
     this.itemClick,
@@ -122,26 +121,7 @@ class _GooglePlaceAutoCompleteTextFieldState
 
   getLocation(String text) async {
     String apiURL =
-        "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$text&key=${widget
-        .googleAPIKey}&language=${widget.language}";
-
-    if (widget.countries != null) {
-      // in
-
-      for (int i = 0; i < widget.countries!.length; i++) {
-        String country = widget.countries![i];
-
-        if (i == 0) {
-          apiURL = apiURL + "&components=country:$country";
-        } else {
-          apiURL = apiURL + "|" + "country:" + country;
-        }
-      }
-    }
-    if (widget.placeType != null) {
-      apiURL += "&types=${widget.placeType?.apiString}";
-    }
-
+        "${widget.backendUrl}/google/autocomplete?google_input=$text&language=${widget.language}";
     if (_cancelToken?.isCancelled == false) {
       _cancelToken?.cancel();
       _cancelToken = CancelToken();
@@ -260,17 +240,16 @@ class _GooglePlaceAutoCompleteTextFieldState
   Future<Response?> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     //String key = GlobalConfiguration().getString('google_maps_key');
     var url =
-        "https://maps.googleapis.com/maps/api/place/details/json?placeid=${prediction
-        .placeId}&key=${widget.googleAPIKey}";
+        "${widget.backendUrl}/google/get_place_details?place_id=${prediction
+        .placeId}&language=${widget.language}";
     try {
       Response response = await _dio.get(
         url,
       );
-      PlaceDetails placeDetails = PlaceDetails.fromJson(response.data);
-      prediction.lat = placeDetails.result!.geometry!.location!.lat.toString();
-      prediction.lng = placeDetails.result!.geometry!.location!.lng.toString();
-
-      widget.getPlaceDetailWithLatLng!(prediction);
+      if (response.data.containsKey('location')){
+        PlaceDetails placeDetails = PlaceDetails.fromJson(response.data['location']);
+        widget.getPlaceDetailWithLatLng!(placeDetails.lat!, placeDetails.lng!);
+      }
     } catch (e) {
       var errorHandler = ErrorHandler.internal().handleError(e);
       _showSnackBar("${errorHandler.message}");
@@ -327,7 +306,7 @@ PlaceDetails parsePlaceDetailMap(Map responseBody) {
 
 typedef ItemClick = void Function(Prediction postalCodeResponse);
 typedef GetPlaceDetailswWithLatLng = void Function(
-    Prediction postalCodeResponse);
+    double lat, double lng);
 
 typedef ListItemBuilder = Widget Function(
     BuildContext context, int index, Prediction prediction);
