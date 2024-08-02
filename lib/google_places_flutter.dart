@@ -135,6 +135,7 @@ class _GooglePlaceAutoCompleteTextFieldState
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       Map map = response.data;
+      print(map);
       if (map.containsKey("error_message")) {
         throw response.data;
       }
