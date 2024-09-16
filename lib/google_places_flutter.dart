@@ -31,7 +31,7 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   bool showError;
   double? containerHorizontalPadding;
   double? containerVerticalPadding;
-  FocusNode? focusNode;
+  FocusNode focusNode = FocusNode();
   PlaceType? placeType;
   String? language;
 
@@ -52,7 +52,6 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
     this.showError = true,
     this.containerHorizontalPadding,
     this.containerVerticalPadding,
-    this.focusNode,
     this.placeType, this.language = 'en'});
 
   @override
@@ -98,13 +97,14 @@ class _GooglePlaceAutoCompleteTextFieldState
                 decoration: widget.inputDecoration,
                 style: widget.textStyle,
                 controller: widget.textEditingController,
-                focusNode: widget.focusNode ?? FocusNode(),
+                focusNode: widget.focusNode,
                 onChanged: (string) {
                   subject.add(string);
                   if (widget.isCrossBtnShown) {
                     isCrossBtn = string.isNotEmpty ? true : false;
                     setState(() {});
                   }
+                  widget.focusNode.requestFocus();
                 },
               ),
             ),
@@ -135,7 +135,6 @@ class _GooglePlaceAutoCompleteTextFieldState
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       Map map = response.data;
-      print(map);
       if (map.containsKey("error_message")) {
         throw response.data;
       }
@@ -277,6 +276,7 @@ class _GooglePlaceAutoCompleteTextFieldState
     if (widget.onClearData != null) {
       widget.onClearData!();
     }
+    widget.focusNode.requestFocus();
   }
 
   _showCrossIconWidget() {
