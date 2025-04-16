@@ -127,7 +127,8 @@ class _GooglePlaceAutoCompleteTextFieldState
     }
 
     try {
-      Response response = await _dio.get(autocompleteUrl);
+      var url = '$autocompleteUrl'.replaceFirst('\$google_input', text);
+      Response response = await _dio.get(url);
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       Map map = response.data;
@@ -236,8 +237,10 @@ class _GooglePlaceAutoCompleteTextFieldState
   Future<Response?> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     //String key = GlobalConfiguration().getString('google_maps_key');
     try {
+      var url = '${widget.getPlaceDetailsUrl}'.replaceFirst('\$place_id', prediction
+        .placeId);
       Response response = await _dio.get(
-        widget.getPlaceDetailsUrl,
+        url,
       );
       if (response.data.containsKey('location')){
         PlaceDetails placeDetails = PlaceDetails.fromJson(response.data['location']);
