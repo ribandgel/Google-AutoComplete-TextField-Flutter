@@ -237,8 +237,7 @@ class _GooglePlaceAutoCompleteTextFieldState
   Future<Response?> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     //String key = GlobalConfiguration().getString('google_maps_key');
     try {
-      var url = '${widget.getPlaceDetailsUrl}'.replaceFirst('\$place_id', prediction
-        .placeId);
+      var url = '${widget.getPlaceDetailsUrl}'.replaceFirst('\$place_id', '${prediction.placeId}');
       Response response = await _dio.get(
         url,
       );
