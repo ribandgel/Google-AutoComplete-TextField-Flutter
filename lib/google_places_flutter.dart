@@ -18,7 +18,8 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   Function? onClearData;
   GetPlaceDetailswWithLatLng? getPlaceDetailWithLatLng;
   bool isLatLngRequired = true;
-  String backendUrl;
+  String autocompleteUrl;
+  String getPlaceDetailsUrl;
   TextStyle textStyle;
   int debounceTime = 600;
   List<String>? countries = [];
@@ -33,10 +34,10 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   double? containerVerticalPadding;
   FocusNode focusNode = FocusNode();
   PlaceType? placeType;
-  String? language;
 
   GooglePlaceAutoCompleteTextField({required this.textEditingController,
-    required this.backendUrl,
+    required this.autocompleteUrl,
+    required this.getPlaceDetailsUrl,
     this.debounceTime: 600,
     this.inputDecoration: const InputDecoration(),
     this.itemClick,
@@ -52,7 +53,7 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
     this.showError = true,
     this.containerHorizontalPadding,
     this.containerVerticalPadding,
-    this.placeType, this.language = 'en'});
+    this.placeType});
 
   @override
   _GooglePlaceAutoCompleteTextFieldState createState() =>
@@ -120,18 +121,13 @@ class _GooglePlaceAutoCompleteTextFieldState
   }
 
   getLocation(String text) async {
-    String apiURL =
-        "${widget.backendUrl}/google/autocomplete?google_input=$text&language=${widget.language}";
     if (_cancelToken?.isCancelled == false) {
       _cancelToken?.cancel();
       _cancelToken = CancelToken();
     }
 
     try {
-      //String proxyURL = "https://cors-anywhere.herokuapp.com/";
-      String url = kIsWeb ? apiURL : apiURL;
-
-      Response response = await _dio.get(url);
+      Response response = await _dio.get(autocompleteUrl);
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
       Map map = response.data;
@@ -239,12 +235,9 @@ class _GooglePlaceAutoCompleteTextFieldState
 
   Future<Response?> getPlaceDetailsFromPlaceId(Prediction prediction) async {
     //String key = GlobalConfiguration().getString('google_maps_key');
-    var url =
-        "${widget.backendUrl}/google/get_place_details?place_id=${prediction
-        .placeId}&language=${widget.language}";
     try {
       Response response = await _dio.get(
-        url,
+        widget.getPlaceDetailsUrl,
       );
       if (response.data.containsKey('location')){
         PlaceDetails placeDetails = PlaceDetails.fromJson(response.data['location']);
