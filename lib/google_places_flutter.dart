@@ -127,7 +127,7 @@ class _GooglePlaceAutoCompleteTextFieldState
     }
 
     try {
-      var url = '$autocompleteUrl'.replaceFirst('\$google_input', text);
+      var url = '${widget.autocompleteUrl}'.replaceFirst('\$google_input', text);
       Response response = await _dio.get(url);
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
