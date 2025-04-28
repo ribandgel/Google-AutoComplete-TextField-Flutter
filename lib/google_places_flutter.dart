@@ -32,7 +32,6 @@ class GooglePlaceAutoCompleteTextField extends StatefulWidget {
   bool showError;
   double? containerHorizontalPadding;
   double? containerVerticalPadding;
-  FocusNode focusNode = FocusNode();
   PlaceType? placeType;
 
   GooglePlaceAutoCompleteTextField({required this.textEditingController,
@@ -98,14 +97,12 @@ class _GooglePlaceAutoCompleteTextFieldState
                 decoration: widget.inputDecoration,
                 style: widget.textStyle,
                 controller: widget.textEditingController,
-                focusNode: widget.focusNode,
                 onChanged: (string) {
                   subject.add(string);
                   if (widget.isCrossBtnShown) {
                     isCrossBtn = string.isNotEmpty ? true : false;
                     setState(() {});
                   }
-                  widget.focusNode.requestFocus();
                 },
               ),
             ),
@@ -271,7 +268,6 @@ class _GooglePlaceAutoCompleteTextFieldState
     if (widget.onClearData != null) {
       widget.onClearData!();
     }
-    widget.focusNode.requestFocus();
   }
 
   _showCrossIconWidget() {
